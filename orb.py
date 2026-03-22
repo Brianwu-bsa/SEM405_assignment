@@ -47,25 +47,26 @@ class ORB:
     def __init__(self, session: Session):
         self.session = session
 
-        self.RR = 2.0
-        self.SL_factor = 1.00  # SL will be in the 100% of the range
+        self.RR = 2.5
+        self.SL_factor = 1.0  # SL will be in the 100% of the range
 
     def enter_trade(self, ts, open, low, high, close, orb_low, orb_high, direction: str) -> Trade:
-
-        midpoint = (orb_low + orb_high) / 2
-        risk = abs(close - midpoint)
-
         orb_range = orb_high - orb_low
+
+        sl_distance = orb_range * self.SL_factor  # = 1.0 * range
+        tp_distance = self.RR * sl_distance  # = 2.0 * range
+        stop_loss = close - sl_distance * (1 if direction == "long" else -1)
+        take_profit = close + tp_distance * (1 if direction == "long" else -1)
 
         return Trade(
             entry_time=ts,
             entry_price=close,
             direction=direction,
-            stop_loss=close + (orb_range * self.SL_factor) * (-1 if direction == "long" else 1),
+            stop_loss=stop_loss,
             orb_low=orb_low,
             orb_high=orb_high,
             orb_range=orb_range,
-            take_profit=close + self.RR * risk * (-1 if direction == "short" else 1))
+            take_profit=take_profit)
 
     def exit_trade(self, trade: Trade, exit_ts, exit_price, exit_reason):
         trade.exit_time = exit_ts
@@ -147,3 +148,20 @@ if __name__ == '__main__':
     print(f"Avg PnL/Trade: {df['pnl_points'].mean():.2f} pts")
     print(f"Best Trade:    {df['pnl_points'].max():.2f} pts")
     print(f"Worst Trade:   {df['pnl_points'].min():.2f} pts")
+
+    import matplotlib.pyplot as plt
+
+    fig, ax = plt.subplots(figsize=(10, 5))
+
+    ax.hist(df["pnl_points"], bins=40, color="steelblue", edgecolor="white", alpha=0.8)
+
+    ax.axvline(df["pnl_points"].mean(), color="green", linestyle="--", label=f"Mean: {df['pnl_points'].mean():.2f}")
+    ax.axvline(df["pnl_points"].median(), color="red", linestyle="--", label=f"Median: {df['pnl_points'].median():.2f}")
+    ax.axvline(0, color="black", linestyle=":", label="Break-even: 0")
+
+    ax.set_title("PnL Distribution — NQ 15min ORB")
+    ax.set_xlabel("PnL (Points)")
+    ax.set_ylabel("Count")
+    ax.legend()
+    plt.tight_layout()
+    plt.show()
