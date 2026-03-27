@@ -1,0 +1,68 @@
+
+────────────────────────────────────────────────────────────
+  Full Data — All Trades
+────────────────────────────────────────────────────────────
+  Number of trades        : 745
+
+  Mean                    :       8.35 pts
+  Median                  :     -39.75 pts
+  Mode                    :     -85.00 pts
+  Trimmed Mean (1 %)      :       5.35 pts
+  Trimmed Mean (2.5 %)    :       3.78 pts
+
+  Variance                :   14134.44
+  Standard Deviation      :     118.89 pts
+
+  P1                      :    -184.26 pts
+  P5                      :    -128.70 pts
+  P10                     :    -102.00 pts
+  Q1  (25th percentile)   :     -69.50 pts
+  Q2  (50th / median)     :     -39.75 pts
+  Q3  (75th percentile)   :      93.00 pts
+  P90                     :     157.70 pts
+  P95                     :     209.90 pts
+  P99                     :     315.65 pts
+  IQR (Q3 − Q1)          :     162.50 pts
+
+────────────────────────────────────────────────────────────
+  10 % Subsample
+────────────────────────────────────────────────────────────
+  Number of trades        : 74
+
+  Mean                    :      21.34 pts
+  Median                  :     -27.38 pts
+  Mode                    :     -40.00 pts
+  Trimmed Mean (1 %)      :      21.34 pts
+  Trimmed Mean (2.5 %)    :      20.24 pts
+
+  Variance                :   14485.32
+  Standard Deviation      :     120.35 pts
+
+  P1                      :    -168.67 pts
+  P5                      :    -128.59 pts
+  P10                     :    -104.60 pts
+  Q1  (25th percentile)   :     -70.25 pts
+  Q2  (50th / median)     :     -27.38 pts
+  Q3  (75th percentile)   :     118.53 pts
+  P90                     :     198.90 pts
+  P95                     :     248.14 pts
+  P99                     :     293.01 pts
+  IQR (Q3 − Q1)          :     188.78 pts
+
+────────────────────────────────────────────────────────────
+  Comparison — Full Data vs. 10 % Subsample
+────────────────────────────────────────────────────────────
+  Metric                           Full       Sample        Delta
+  ────────────────────────────────────────────────────────
+  Mean                             8.35        21.34       +13.00
+  Median                         -39.75       -27.38       +12.38
+  Mode                           -85.00       -40.00       +45.00
+  Trimmed Mean 1 %                 5.35        21.34       +16.00
+  Trimmed Mean 2.5 %               3.78        20.24       +16.46
+  Std Dev                        118.89       120.35        +1.47
+  Q1                             -69.50       -70.25        -0.75
+  Q3                              93.00       118.53       +25.53
+  IQR                            162.50       188.78       +26.28
+
+  ✓  Subsample mean is positive — the edge holds in the 10 % draw.
+  ✓  |Q3| > |Q1| — asymmetric risk-to-reward confirmed (more upside).
