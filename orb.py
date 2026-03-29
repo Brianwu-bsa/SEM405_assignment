@@ -37,6 +37,7 @@ class Trade:
             "exit_price": self.exit_price,
             "exit_reason": self.exit_reason,
             "pnl_points": self.pnl_points,
+            "pnl": self.pnl,
             "result": self.result}
 
 
