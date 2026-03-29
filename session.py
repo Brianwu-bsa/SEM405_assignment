@@ -2,7 +2,7 @@ import pandas as pd
 import datetime
 
 class Session:
-    def __init__(self, file_path="NQ_1min_RTH.parquet"):
+    def __init__(self, file_path="NAS100_1min_RTH.parquet"):
         self.rth_df = pd.read_parquet(file_path, engine="pyarrow")
         self.sessions = [group for _, group in self.rth_df.groupby(self.rth_df.index.date)]
         self.dates = {index: date for index, (date, _) in enumerate(self.rth_df.groupby(self.rth_df.index.date))}

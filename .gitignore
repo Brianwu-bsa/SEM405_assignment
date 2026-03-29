@@ -9,9 +9,6 @@ __pycache__/
 .venv/
 venv/
 
-*.csv
-data/
-
 .DS_Store
 Thumbs.db
 
