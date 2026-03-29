@@ -22,18 +22,16 @@ def preprocess_data(input_filepath, start_date):
     df.columns = df.columns.str.lower()
 
     df['datetime'] = pd.to_datetime(df['datetime'], format='%Y.%m.%d %H:%M:%S')
-    df['datetime'] = df['datetime'].dt.tz_localize('UTC').dt.tz_convert('America/New_York')
+    df['datetime'] = df['datetime'].dt.tz_localize('+03:00').dt.tz_convert('America/New_York')
     df.set_index('datetime', inplace=True)
     df = df.sort_index()
 
     df = df.loc[start_date:]
     df_rth = df.between_time("09:30", "16:00").copy()
 
-    # 5. Keep only OHLC and convert to float32 (Drops Volume & TickVolume)
     ohlc_cols = ['open', 'high', 'low', 'close']
     df_rth = df_rth[ohlc_cols].astype('float32')
 
-    # 6. Save the processed data
     df_rth.to_csv('NAS100_1min_RTH.csv')
     df_rth.to_parquet('NAS100_1min_RTH.parquet')
 
@@ -44,7 +42,6 @@ def preprocess_data(input_filepath, start_date):
 
 
 if __name__ == "__main__":
-    # Replace 'raw_nas100_data.csv' with the actual name of your downloaded file
     processed_df = preprocess_data('nas100_1min_ETH.csv', "2022-01-01")
 
     print(processed_df.head())
