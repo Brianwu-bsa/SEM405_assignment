@@ -22,12 +22,18 @@ def preprocess_data(input_filepath, start_date):
     df.columns = df.columns.str.lower()
 
     df['datetime'] = pd.to_datetime(df['datetime'], format='%Y.%m.%d %H:%M:%S')
-    df['datetime'] = df['datetime'].dt.tz_localize('+03:00').dt.tz_convert('America/New_York')
+    # weird fix?????
+    df['datetime'] = df['datetime'].dt.tz_localize('EET', ambiguous='NaT', nonexistent='shift_forward').dt.tz_convert('America/New_York')
     df.set_index('datetime', inplace=True)
     df = df.sort_index()
 
     df = df.loc[start_date:]
     df_rth = df.between_time("09:30", "16:00").copy()
+
+    # ensure only valid sessions are left, server outages might occur
+    daily_counts = df_rth.groupby(df_rth.index.normalize()).size()
+    valid_dates = daily_counts[daily_counts >= 350].index
+    df_rth = df_rth[df_rth.index.normalize().isin(valid_dates)]
 
     ohlc_cols = ['open', 'high', 'low', 'close']
     df_rth = df_rth[ohlc_cols].astype('float32')
@@ -42,6 +48,6 @@ def preprocess_data(input_filepath, start_date):
 
 
 if __name__ == "__main__":
-    processed_df = preprocess_data('nas100_1min_ETH.csv', "2022-01-01")
+    processed_df = preprocess_data('nas100_1min_ETH.csv', "2021-06-01")
 
     print(processed_df.head())

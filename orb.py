@@ -20,11 +20,8 @@ class Trade:
     exit_price: Optional[float] = None
     exit_reason: Optional[str] = None  # TP, SL, EOD (end of day)
     pnl_points: Optional[float] = None  # blended per-unit PnL
+    pnl: Optional[float] = None # real pnl based on the set number of micro contracts
     result: Optional[str] = None  # "WIN" / "LOSS" (selling for 0 profit (breakeven) is considered a loss)
-
-    @property
-    def reward_points(self) -> float:
-        return abs(self.take_profit - self.entry_price)
 
     def to_dict(self) -> dict:
         return {
@@ -44,11 +41,14 @@ class Trade:
 
 
 class ORB:
-    def __init__(self, session: Session):
+    def __init__(self, session: Session, micro_contracts=10):
         self.session = session
 
-        self.RR = 2.5
-        self.SL_factor = 1.0  # SL will be in the 100% of the range
+        self.RR = 2.50
+        self.SL_factor = 1.00  # SL will be in the 100% of the range
+
+        # each micro contract (MNQ) leveraged by 2x, for a fill mini-contract or (NQ) it's 20x leverage
+        self.micro_contracts = micro_contracts
 
     def enter_trade(self, ts, open, low, high, close, orb_low, orb_high, direction: str) -> Trade:
         orb_range = orb_high - orb_low
@@ -74,8 +74,10 @@ class ORB:
 
         if trade.direction == "long":
             trade.pnl_points = exit_price - trade.entry_price
+            trade.pnl = trade.pnl_points * self.micro_contracts * 2
         else:
-            trade.pnl_points = trade.entry_price - exit_price
+            trade.pnl_points = (trade.entry_price - exit_price)
+            trade.pnl = trade.pnl_points * self.micro_contracts * 2
 
         if trade.pnl_points <= 0:
             trade.result = "LOSS"
@@ -83,23 +85,26 @@ class ORB:
             trade.result = "WIN"
         return trade
 
-
     def get_trade(self, df):
         orb_bars = df.between_time("9:30", "9:44")
+
         orb_high = max(orb_bars["high"])
         orb_low = min(orb_bars["low"])
+        orb_range = orb_high - orb_low
+
+        if not (20 <= orb_range <= 150):  # filter out orb ranges that are too small or too big
+            return None
 
         forward_bars = df.between_time("9:45", "16:00")
 
         trade = None
-        for ts, (open, high, low, close, volume) in forward_bars.iterrows():
+        for ts, (open, high, low, close) in forward_bars.iterrows():
             if trade is None:  # find entry
                 if close < orb_low:  # short
                     trade = self.enter_trade(ts, open, low, high, close, orb_low, orb_high, "short")
                 elif close > orb_high:
                     trade = self.enter_trade(ts, open, low, high, close, orb_low, orb_high, "long")
-            else:
-
+            else:  # EOD exit
                 if ts > ts.replace(hour=15, minute=55):
                     trade = self.exit_trade(trade, ts, close, exit_reason="EOD")
                     break
@@ -119,9 +124,11 @@ class ORB:
                         self.exit_trade(trade, ts, trade.take_profit, "TP")
                         break
 
-
-        if trade is not None:
-            return trade
+        if trade is not None and trade.exit_time is None:
+            last_ts = forward_bars.index[-1]
+            last_close = forward_bars['close'].iloc[-1]
+            self.exit_trade(trade, last_ts, last_close, exit_reason="FORCE_CLOSE")
+        return trade
 
     def get_all_trades(self):
         trades = []
@@ -130,15 +137,14 @@ class ORB:
             trade = self.get_trade(df)
             if trade is not None:
                 trades.append(trade)
-        return trades
+        trades_df = pd.DataFrame([t.to_dict() for t in trades])
+        return trades, trades_df
 
 
 if __name__ == '__main__':
     session = Session()
     orb = ORB(session)
-    trades = orb.get_all_trades()
-
-    df = pd.DataFrame([t.to_dict() for t in trades])
+    trades, df = orb.get_all_trades()
 
     print(f"Total Trades:  {len(df)}")
     print(f"Wins:          {len(df[df['result'] == 'WIN'])}")
@@ -149,19 +155,73 @@ if __name__ == '__main__':
     print(f"Best Trade:    {df['pnl_points'].max():.2f} pts")
     print(f"Worst Trade:   {df['pnl_points'].min():.2f} pts")
 
+    # import matplotlib.pyplot as plt
+    #
+    # fig, ax = plt.subplots(figsize=(10, 5))
+    #
+    # ax.hist(df["pnl_points"], bins=40, color="steelblue", edgecolor="white", alpha=0.8)
+    #
+    # ax.axvline(df["pnl_points"].mean(), color="green", linestyle="--", label=f"Mean: {df['pnl_points'].mean():.2f}")
+    # ax.axvline(df["pnl_points"].median(), color="red", linestyle="--", label=f"Median: {df['pnl_points'].median():.2f}")
+    # ax.axvline(0, color="black", linestyle=":", label="Break-even: 0")
+    #
+    # ax.set_title("PnL Distribution — NQ 15min ORB")
+    # ax.set_xlabel("PnL (Points)")
+    # ax.set_ylabel("Count")
+    # ax.legend()
+    # plt.tight_layout()
+    # plt.show()
+
+    from scipy import stats
+    from statsmodels.stats.weightstats import ztest
+    z_stat, z_p_value = ztest(df["pnl_points"], value=0.0, alternative='larger')
+    print(z_stat, z_p_value)
+
+    t_stat, p_value = stats.ttest_1samp(df['pnl_points'].dropna(), popmean=0, alternative="greater")
+
+
+    # 2. Print the results
+    print("\n--- Statistical Significance ---")
+    print(f"T-statistic: {t_stat:.4f}")
+    print(f"P-value:     {p_value:.4f}")
+
+    # 3. Interpret the result
+    alpha = 0.05  # Standard significance level
+    if p_value < alpha:
+        print("Result: Statistically Significant (Reject H0)")
+        print(f"The strategy likely has a real edge (p < {alpha}).")
+    else:
+        print("Result: Not Statistically Significant (Fail to reject H0)")
+        print("The results could be due to random chance.")
+
+    # equity curve
     import matplotlib.pyplot as plt
 
-    fig, ax = plt.subplots(figsize=(10, 5))
+    # 1. Calculate Cumulative PnL
+    # We add a 0 at the start so the graph begins at the origin
+    cumulative_pnl = df['pnl_points'].cumsum()
+    trade_numbers = range(1, len(cumulative_pnl) + 1)
 
-    ax.hist(df["pnl_points"], bins=40, color="steelblue", edgecolor="white", alpha=0.8)
+    # 2. Create the Plot
+    fig, ax = plt.subplots(figsize=(12, 6))
 
-    ax.axvline(df["pnl_points"].mean(), color="green", linestyle="--", label=f"Mean: {df['pnl_points'].mean():.2f}")
-    ax.axvline(df["pnl_points"].median(), color="red", linestyle="--", label=f"Median: {df['pnl_points'].median():.2f}")
-    ax.axvline(0, color="black", linestyle=":", label="Break-even: 0")
+    # Plot the equity curve
+    ax.plot(trade_numbers, cumulative_pnl, marker='o', linestyle='-', color='royalblue', markersize=4,
+            label='Cumulative PnL')
 
-    ax.set_title("PnL Distribution — NQ 15min ORB")
-    ax.set_xlabel("PnL (Points)")
-    ax.set_ylabel("Count")
+    # Add a horizontal line at zero for reference
+    ax.axhline(0, color='black', linewidth=1, linestyle='--')
+
+    # Fill the area between the line and zero to highlight drawdowns vs profits
+    ax.fill_between(trade_numbers, cumulative_pnl, 0, where=(cumulative_pnl >= 0), color='green', alpha=0.1)
+    ax.fill_between(trade_numbers, cumulative_pnl, 0, where=(cumulative_pnl < 0), color='red', alpha=0.1)
+
+    # Formatting
+    ax.set_title("Equity Curve: Cumulative PnL over Number of Trades", fontsize=14, fontweight='bold')
+    ax.set_xlabel("Trade Number", fontsize=12)
+    ax.set_ylabel("Total PnL (Points)", fontsize=12)
+    ax.grid(True, linestyle=':', alpha=0.6)
     ax.legend()
+
     plt.tight_layout()
     plt.show()
