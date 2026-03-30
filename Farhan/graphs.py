@@ -5,12 +5,10 @@ from session import Session
 from orb import ORB
 
 # Load data from existing ORB code
-session = Session("NQ_1min_RTH.parquet")
+session = Session("../NAS100_1min_RTH.parquet")
 orb = ORB(session)
-trades = orb.get_all_trades()
+trades, df = orb.get_all_trades()
 
-# Convert trades to DataFrame
-df = pd.DataFrame([t.to_dict() for t in trades])
 
 # Main analysis column
 pnl = df["pnl_points"].dropna()
