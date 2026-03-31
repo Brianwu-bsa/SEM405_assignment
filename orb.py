@@ -23,6 +23,8 @@ class Trade:
     pnl: Optional[float] = None # real pnl based on the set number of micro contracts
     result: Optional[str] = None  # "WIN" / "LOSS" (selling for 0 profit (breakeven) is considered a loss)
 
+    market_return: Optional[float] = None
+
     def to_dict(self) -> dict:
         return {
             "entry_time": self.entry_time,
@@ -38,6 +40,7 @@ class Trade:
             "exit_reason": self.exit_reason,
             "pnl_points": self.pnl_points,
             "pnl": self.pnl,
+            "market_return": self.market_return,
             "result": self.result}
 
 
@@ -125,10 +128,13 @@ class ORB:
                         self.exit_trade(trade, ts, trade.take_profit, "TP")
                         break
 
-        if trade is not None and trade.exit_time is None:
-            last_ts = forward_bars.index[-1]
-            last_close = forward_bars['close'].iloc[-1]
-            self.exit_trade(trade, last_ts, last_close, exit_reason="FORCE_CLOSE")
+        if trade is not None:
+            if trade.exit_time is None:
+                last_ts = forward_bars.index[-1]
+                last_close = forward_bars['close'].iloc[-1]
+                self.exit_trade(trade, last_ts, last_close, exit_reason="FORCE_CLOSE")
+            trade.market_return = (df["close"].iloc[-1] - df["open"].iloc[0]) / df["open"].iloc[0]
+
         return trade
 
     def get_all_trades(self):
