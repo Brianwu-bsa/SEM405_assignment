@@ -3,7 +3,13 @@ import datetime
 
 class Session:
     def __init__(self, file_path="NAS100_1min_RTH.parquet"):
-        self.rth_df = pd.read_parquet(file_path, engine="pyarrow")
+        if file_path.endswith(".csv"):
+            self.rth_df = pd.read_csv(file_path, index_col=0, dtype={'open': 'float32', 'high': 'float32', 'low': 'float32', 'close': 'float32'})
+            self.rth_df.index = pd.to_datetime(self.rth_df.index, utc=True).tz_convert('America/New_York')
+        elif file_path.endswith(".parquet"):
+            self.rth_df = pd.read_parquet(file_path, engine="pyarrow")
+        else:
+            raise ValueError("File extension not supported!")
         self.sessions = [group for _, group in self.rth_df.groupby(self.rth_df.index.date)]
         self.dates = {index: date for index, (date, _) in enumerate(self.rth_df.groupby(self.rth_df.index.date))}
 
@@ -34,9 +40,6 @@ class Session:
 
 
 if __name__ == "__main__":
-    s = Session()
-    # print(len(s))
-    # print(s.get_session(765))
-    date = datetime.date(2025, 12, 11)
-    print(s.get_dates())
-    # print(s.date_to_index(date))
+    s = Session("NAS100_1min_RTH.csv")
+    s = Session("NAS100_1min_RTH.parquet")
+
