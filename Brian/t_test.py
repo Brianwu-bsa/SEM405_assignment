@@ -19,7 +19,7 @@ def z_test(trades_df):
 
 
 if __name__ == "__main__":
-    orb = ORB(Session("../deprecated/NQ_1min_RTH.parquet"))
+    orb = ORB(Session("../NAS100_1min_RTH.parquet"))
     _, trades_df = orb.get_all_trades()
 
     print(t_test(trades_df))
