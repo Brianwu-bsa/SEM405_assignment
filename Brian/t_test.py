@@ -11,16 +11,8 @@ def t_test(trades_df):
     return t_stat, p_value
 
 
-def z_test(trades_df):
-    pnl_points = trades_df["pnl_points"]
-    z_stat, p_value = ztest(pnl_points, value=0, alternative="larger")
-
-    return z_stat, p_value
-
-
 if __name__ == "__main__":
     orb = ORB(Session("../NAS100_1min_RTH.parquet"))
     _, trades_df = orb.get_all_trades()
 
     print(t_test(trades_df))
-    print(z_test(trades_df))
