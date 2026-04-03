@@ -2,7 +2,6 @@ from session import Session
 from orb import ORB
 
 from scipy import stats
-from statsmodels.stats.weightstats import ztest
 
 def t_test(trades_df):
     pnl_points = trades_df["pnl_points"]
