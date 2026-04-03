@@ -244,12 +244,11 @@ def plot_comparison_grouped_bar(full: dict, sample: dict, filename: str):
 
 def main():
     # Load the 1-minute NQ data and generate all ORB trades
-    session = Session("../deprecated/NQ_1min_RTH.parquet")
+    session = Session("../NAS100_1min_RTH.parquet")
     orb = ORB(session)
-    trades = orb.get_all_trades()
+    trades, df = orb.get_all_trades()
 
     # Build a DataFrame and extract the PnL column, dropping any None values
-    df = pd.DataFrame([t.to_dict() for t in trades])
     pnl = df["pnl_points"].dropna().values
 
     # ── Full dataset analysis ────────────────────────────────────────────
@@ -271,9 +270,9 @@ def main():
 
     # ── Generate charts ─────────────────────────────────────────────────
     print_section("Charts")
-    plot_percentile_bar(full_stats, "../deprecated/percentiles_full.png")
-    plot_percentile_bar(sample_stats, "../deprecated/percentiles_sample.png")
-    plot_comparison_grouped_bar(full_stats, sample_stats, "../deprecated/comparison_full_vs_sample.png")
+    plot_percentile_bar(full_stats, "percentiles_full.png")
+    plot_percentile_bar(sample_stats, "percentiles_sample.png")
+    plot_comparison_grouped_bar(full_stats, sample_stats, "comparison_full_vs_sample.png")
 
     print(f"\n{SEPARATOR}")
     print("  Analysis complete.")
