@@ -249,19 +249,14 @@ def main():
     trades, df = orb.get_all_trades()
 
     # Build a DataFrame and extract the PnL column, dropping any None values
-    pnl = df["pnl_points"].dropna().values
+    pnl = df["pnl_points"].dropna()
 
     # ── Full dataset analysis ────────────────────────────────────────────
-    full_stats = compute_all_stats(pnl, label="Full Data — All Trades")
+    full_stats = compute_all_stats(pnl.values, label="Full Data — All Trades")
     print_stats(full_stats)
 
     # ── 10 % random subsample ───────────────────────────────────────────
-    # We use a fixed seed so the results are reproducible across runs
-    rng = np.random.default_rng(seed=42)
-    sample_size = max(1, int(len(pnl) * 0.10))
-    sample_idx = rng.choice(len(pnl), size=sample_size, replace=False)
-    pnl_sample = pnl[sample_idx]
-
+    pnl_sample = pnl.sample(frac=0.1, random_state=42)
     sample_stats = compute_all_stats(pnl_sample, label="10 % Subsample")
     print_stats(sample_stats)
 
