@@ -7,6 +7,9 @@
   Mean                    :       9.40 pts
   Median                  :     -37.95 pts
   Mode                    :     -86.20 pts
+  Range                   :     514.55 pts
+  Min                   :    -149.30 pts
+  Max                   :     365.25 pts
   Trimmed Mean (1 %)      :       7.88 pts
   Trimmed Mean (2.5 %)    :       6.05 pts
 
@@ -32,6 +35,9 @@
   Mean                    :       2.06 pts
   Median                  :     -43.50 pts
   Mode                    :    -141.00 pts
+  Range                   :     506.25 pts
+  Min                   :    -141.00 pts
+  Max                   :     365.25 pts
   Trimmed Mean (1 %)      :      -0.17 pts
   Trimmed Mean (2.5 %)    :      -1.98 pts
 
@@ -57,6 +63,9 @@
   Mean                             9.40         2.06        -7.35
   Median                         -37.95       -43.50        -5.55
   Mode                           -86.20      -141.00       -54.80
+  Range                          514.55       506.25        -8.30
+  Min                           -149.30      -141.00        +8.30
+  Max                            365.25       365.25        +0.00
   Trimmed Mean 1 %                 7.88        -0.17        -8.05
   Trimmed Mean 2.5 %               6.05        -1.98        -8.03
   Std Dev                        105.90       111.36        +5.46

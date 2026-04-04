@@ -80,6 +80,9 @@ def compute_all_stats(data: np.ndarray, label: str = "Full Data") -> dict:
         "mean": float(np.mean(data)),
         "median": float(np.median(data)),
         "mode": compute_mode(data),
+        "range": np.max(data) - np.min(data),
+        "min": np.min(data),
+        "max": np.max(data),
         "trimmed_mean_1pct": compute_trimmed_mean(data, 0.01),
         "trimmed_mean_2_5pct": compute_trimmed_mean(data, 0.025),
         "variance": float(np.var(data, ddof=1)),       # sample variance (N-1)
@@ -108,6 +111,9 @@ def print_stats(s: dict):
     print(f"  Mean                    : {s['mean']:>10.2f} pts")
     print(f"  Median                  : {s['median']:>10.2f} pts")
     print(f"  Mode                    : {s['mode']:>10.2f} pts")
+    print(f"  Range                   : {s['range']:>10.2f} pts")
+    print(f"  Min                   : {s['min']:>10.2f} pts")
+    print(f"  Max                   : {s['max']:>10.2f} pts")
     print(f"  Trimmed Mean (1 %)      : {s['trimmed_mean_1pct']:>10.2f} pts")
     print(f"  Trimmed Mean (2.5 %)    : {s['trimmed_mean_2_5pct']:>10.2f} pts")
     print()
@@ -141,6 +147,9 @@ def print_comparison(full: dict, sample: dict):
         ("Mean",                "mean"),
         ("Median",              "median"),
         ("Mode",                "mode"),
+        ("Range",               "range"),
+        ("Min",               "min"),
+        ("Max",               "max"),
         ("Trimmed Mean 1 %",    "trimmed_mean_1pct"),
         ("Trimmed Mean 2.5 %",  "trimmed_mean_2_5pct"),
         ("Std Dev",             "std_dev"),
