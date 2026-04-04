@@ -152,15 +152,20 @@ if __name__ == '__main__':
     session = Session()
     orb = ORB(session)
     trades, df = orb.get_all_trades()
+    print(len(pd.read_csv("NAS100_1min_RTH.csv")))
+    direction = df["direction"].values
+    longs = len(direction[direction == "long"])
+    shorts = len(direction[direction == "short"])
 
-    print(f"Total Trades:  {len(df)}")
-    print(f"Wins:          {len(df[df['result'] == 'WIN'])}")
-    print(f"Losses:        {len(df[df['result'] == 'LOSS'])}")
-    print(f"Win Rate:      {len(df[df['result'] == 'WIN']) / len(df):.1%}")
-    print(f"Total PnL:     {df['pnl_points'].sum():.2f} pts")
-    print(f"Avg PnL/Trade: {df['pnl_points'].mean():.2f} pts")
-    print(f"Best Trade:    {df['pnl_points'].max():.2f} pts")
-    print(f"Worst Trade:   {df['pnl_points'].min():.2f} pts")
+    print(f"Total Trades: {len(df)}")
+    print(f"Wins: {len(df[df['result'] == 'WIN'])}")
+    print(f"Losses: {len(df[df['result'] == 'LOSS'])}")
+    print(f"Win Rate: {round(100 * len(df[df['result'] == 'WIN']) / len(df), 2)}%")
+    print(f"Total PnL (points): {round(df['pnl_points'].sum(), 2)} pts")
+    print(f"Total PnL: {round(df['pnl_points'].sum() * 20, 2)} dollars")
+    print(f"Avg PnL/Trade: {round(df['pnl_points'].mean(), 2)} pts")
+    print(f"Best Trade: {round(df['pnl_points'].max(), 2)} pts")
+    print(f"Worst Trade: {round(df['pnl_points'].min(), 2)} pts")
 
     # import matplotlib.pyplot as plt
     #
@@ -179,56 +184,56 @@ if __name__ == '__main__':
     # plt.tight_layout()
     # plt.show()
 
-    from scipy import stats
-    from statsmodels.stats.weightstats import ztest
-    z_stat, z_p_value = ztest(df["pnl_points"], value=0.0, alternative='larger')
-    print(z_stat, z_p_value)
-
-    t_stat, p_value = stats.ttest_1samp(df['pnl_points'].dropna(), popmean=0, alternative="greater")
-
-
-    # 2. Print the results
-    print("\n--- Statistical Significance ---")
-    print(f"T-statistic: {t_stat:.4f}")
-    print(f"P-value:     {p_value:.4f}")
-
-    # 3. Interpret the result
-    alpha = 0.05  # Standard significance level
-    if p_value < alpha:
-        print("Result: Statistically Significant (Reject H0)")
-        print(f"The strategy likely has a real edge (p < {alpha}).")
-    else:
-        print("Result: Not Statistically Significant (Fail to reject H0)")
-        print("The results could be due to random chance.")
-
-    # equity curve
-    import matplotlib.pyplot as plt
-
-    # 1. Calculate Cumulative PnL
-    # We add a 0 at the start so the graph begins at the origin
-    cumulative_pnl = df['pnl_points'].cumsum()
-    trade_numbers = range(1, len(cumulative_pnl) + 1)
-
-    # 2. Create the Plot
-    fig, ax = plt.subplots(figsize=(12, 6))
-
-    # Plot the equity curve
-    ax.plot(trade_numbers, cumulative_pnl, marker='o', linestyle='-', color='royalblue', markersize=4,
-            label='Cumulative PnL')
-
-    # Add a horizontal line at zero for reference
-    ax.axhline(0, color='black', linewidth=1, linestyle='--')
-
-    # Fill the area between the line and zero to highlight drawdowns vs profits
-    ax.fill_between(trade_numbers, cumulative_pnl, 0, where=(cumulative_pnl >= 0), color='green', alpha=0.1)
-    ax.fill_between(trade_numbers, cumulative_pnl, 0, where=(cumulative_pnl < 0), color='red', alpha=0.1)
-
-    # Formatting
-    ax.set_title("Equity Curve: Cumulative PnL over Number of Trades", fontsize=14, fontweight='bold')
-    ax.set_xlabel("Trade Number", fontsize=12)
-    ax.set_ylabel("Total PnL (Points)", fontsize=12)
-    ax.grid(True, linestyle=':', alpha=0.6)
-    ax.legend()
-
-    plt.tight_layout()
-    plt.show()
+    # from scipy import stats
+    # from statsmodels.stats.weightstats import ztest
+    # z_stat, z_p_value = ztest(df["pnl_points"], value=0.0, alternative='larger')
+    # print(z_stat, z_p_value)
+    #
+    # t_stat, p_value = stats.ttest_1samp(df['pnl_points'].dropna(), popmean=0, alternative="greater")
+    #
+    #
+    # # 2. Print the results
+    # print("\n--- Statistical Significance ---")
+    # print(f"T-statistic: {t_stat:.4f}")
+    # print(f"P-value:     {p_value:.4f}")
+    #
+    # # 3. Interpret the result
+    # alpha = 0.05  # Standard significance level
+    # if p_value < alpha:
+    #     print("Result: Statistically Significant (Reject H0)")
+    #     print(f"The strategy likely has a real edge (p < {alpha}).")
+    # else:
+    #     print("Result: Not Statistically Significant (Fail to reject H0)")
+    #     print("The results could be due to random chance.")
+    #
+    # # equity curve
+    # import matplotlib.pyplot as plt
+    #
+    # # 1. Calculate Cumulative PnL
+    # # We add a 0 at the start so the graph begins at the origin
+    # cumulative_pnl = df['pnl_points'].cumsum()
+    # trade_numbers = range(1, len(cumulative_pnl) + 1)
+    #
+    # # 2. Create the Plot
+    # fig, ax = plt.subplots(figsize=(12, 6))
+    #
+    # # Plot the equity curve
+    # ax.plot(trade_numbers, cumulative_pnl, marker='o', linestyle='-', color='royalblue', markersize=4,
+    #         label='Cumulative PnL')
+    #
+    # # Add a horizontal line at zero for reference
+    # ax.axhline(0, color='black', linewidth=1, linestyle='--')
+    #
+    # # Fill the area between the line and zero to highlight drawdowns vs profits
+    # ax.fill_between(trade_numbers, cumulative_pnl, 0, where=(cumulative_pnl >= 0), color='green', alpha=0.1)
+    # ax.fill_between(trade_numbers, cumulative_pnl, 0, where=(cumulative_pnl < 0), color='red', alpha=0.1)
+    #
+    # # Formatting
+    # ax.set_title("Equity Curve: Cumulative PnL over Number of Trades", fontsize=14, fontweight='bold')
+    # ax.set_xlabel("Trade Number", fontsize=12)
+    # ax.set_ylabel("Total PnL (Points)", fontsize=12)
+    # ax.grid(True, linestyle=':', alpha=0.6)
+    # ax.legend()
+    #
+    # plt.tight_layout()
+    # plt.show()
