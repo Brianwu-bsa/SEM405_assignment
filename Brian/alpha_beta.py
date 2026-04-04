@@ -32,14 +32,15 @@ def compute_levered_alpha_beta(trades_df, account_value=50000):
 def print_result(result):
     beta = result["slope"]
     alpha = result["intercept"]
-    r_squared = result["r_squared"] # rvalue is the correlation coefficient (R)
+    r_value = result["r_value"]  # rvalue is the correlation coefficient (R)
+    r_squared = result["r_squared"]
     p_value = result["p_value"]  # p-value for the hypothesis test on Beta
     annualized_alpha = result["annualized_alpha"]
 
-    print("--- Linear Regression Results (Strategy vs Market) ---")
     print(f"Beta (Market Exposure): {round(beta, 4)}")
     print(f"Alpha (Excess Return): {round(alpha, 6)} (Per Trade/Day)")
     print(f"Alpha (Excess Return): {round(annualized_alpha, 6)} (Annualized)")
+    print(f"r-value: {round(r_value, 4)}")
     print(f"R-squared (Determination): {round(r_squared, 4)}")
     print(f"P-value (Beta significance): {round(p_value, 4)}")
 
@@ -73,6 +74,7 @@ def plot_returns(trades_df, result):
         f"$\\beta$ (Beta): {round(result["slope"], 4)}\n"
         f"$\\alpha$ (Alpha): {round(result["intercept"], 6)}\n"
         f"$\\alpha$ (Annualized Alpha): {round(result["annualized_alpha"] * 100, 2)}%\n"
+        f"$r$: {round(result["r_value"], 4)}\n"
         f"$R^2$: {round(result["r_squared"], 4)}\n"
         f"p-value: {round(result["p_value"], 4)}"
     )
@@ -109,7 +111,7 @@ def plot_levered_returns(trades_df, result, account_value=50000):
             label=f'Regression Line ($y = {round(result["slope"], 4)}x + {round(result["intercept"], 6)}$)')
 
     # Formatting and Labels
-    ax.set_title("15m ORB Strategy Return (Levered 20x) vs. NAS100 Market Return", fontsize=14, fontweight='bold')
+    ax.set_title("15m ORB Strategy Return (Levered ~8.5x) vs. NAS100 Market Return", fontsize=14, fontweight='bold')
     ax.set_xlabel("Market Return (RTH Close - Open) / Open", fontsize=12)
     ax.set_ylabel("Strategy Return (Levered)", fontsize=12)
 
@@ -122,6 +124,7 @@ def plot_levered_returns(trades_df, result, account_value=50000):
         f"$\\beta$ (Beta): {round(result["slope"], 4)}\n"
         f"$\\alpha$ (Alpha): {round(result["intercept"], 6)}\n"
         f"$\\alpha$ (Annualized Alpha): {round(result["annualized_alpha"] * 100, 2)}%\n"
+        f"$r$: {round(result["r_value"], 4)}\n"
         f"$R^2$: {round(result["r_squared"], 4)}\n"
         f"p-value: {round(result["p_value"], 4)}"
     )
@@ -145,10 +148,12 @@ if __name__ == "__main__":
     orb = ORB(Session("../NAS100_1min_RTH.parquet"))
     trades, trades_df = orb.get_all_trades()
 
+    print("--- Linear Regression Results (Strategy vs Market) Unlevered ---")
     result = compute_alpha_beta(trades_df)
     print_result(result)
     plot_returns(trades_df, result)
 
+    print("--- Linear Regression Results (Strategy vs Market) Levered ---")
     result = compute_levered_alpha_beta(trades_df)
     print_result(result)
     plot_levered_returns(trades_df, result)

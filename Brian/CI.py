@@ -13,7 +13,8 @@ def compute_confidence_interval(trades_df, CI=0.95):
 if __name__ == "__main__":
     orb = ORB(Session("../NAS100_1min_RTH.parquet"))
     _, trades_df = orb.get_all_trades()
+    trades_df.to_csv("trade_df.csv")
 
-    for CI in [0.75, 0.85, 0.95]:
+    for CI in [0.75, 0.85, 0.95, 0.99]:
         CIL, CIU = compute_confidence_interval(trades_df, CI)
         print(CIL, CIU)
